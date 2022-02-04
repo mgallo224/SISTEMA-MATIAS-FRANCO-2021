@@ -1,3 +1,4 @@
+from ast import Str
 from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
@@ -76,23 +77,31 @@ def cventas():
                 for obtener_producto0 in obtener_producto0:
                     cursor.execute("SELECT cantidad,tipo,producto FROM stock WHERE id = ?", (obtener_producto0+1,))
                     data0=cursor.fetchone()
-                    cursor.execute("SELECT precioventa from stock where producto=?", (data0[2],))
-                    precio = cursor.fetchone()
-                    obtener_precio = int(obtener_cantidad)*int(precio[0])
-                    cursor.execute("SELECT costoxunidad from stock where producto=?",(data0[2],))
-                    costoxun = cursor.fetchone()
-                    liquidacion = int(obtener_precio)-int(costoxun[0])*int(obtener_cantidad)
-                    cursor.execute("SELECT cantidad,tipo,producto FROM stock WHERE id = ?", (obtener_producto0+1,))
-                    data0=cursor.fetchone()
-                    cursor.execute("insert into ventas (producto,cantidad,precio,fecha,ncliente,dcliente,parallevar,mes,año,tipo,liquidacion) values (?, ?, ?, ?, ?, ?,?,?,?,?,?)",(data0[2], obtener_cantidad, obtener_precio,fecha, obtener_nombreyapellidocliente, obtener_direccioncliente,parallevar,obmes,obaño,data0[1],liquidacion))
-                    cantidad_a_restar = data0[0]-int(obtener_cantidad)
-                    cursor.execute("UPDATE stock SET cantidad=? where producto=?", (cantidad_a_restar,data0[2]))
-                    cursor.execute("SELECT veces,vxunidad FROM stock WHERE producto = ?", (data0[2],))
-                    veces=cursor.fetchone()
-                    vxunidad = veces[1]+int(obtener_cantidad)
-                    cursor.execute("UPDATE stock SET veces=?, vxunidad=? where producto=?", (veces[0]+1,vxunidad, data0[2]))
-                    conn.commit()
-                    pdf(data0[2],obtener_cantidad,obtener_precio,fecha,obmes,obaño)
+                    if data0[0]<int(obtener_cantidad):
+                        cursor.execute("SELECT cantidad,tipo,producto FROM stock WHERE id = ?", (obtener_producto0+1,))
+                        datap=cursor.fetchone()
+                        a = "El siguiente producto no posee en stock la cantidad ingresada: "
+                        b = datap[2]
+                        error = a + b
+                        messagebox.showerror("ERROR AL CARGAR LA VENTA", error)
+                    else:    
+                        cursor.execute("SELECT precioventa from stock where producto=?", (data0[2],))
+                        precio = cursor.fetchone()
+                        obtener_precio = int(obtener_cantidad)*int(precio[0])
+                        cursor.execute("SELECT costoxunidad from stock where producto=?",(data0[2],))
+                        costoxun = cursor.fetchone()
+                        liquidacion = int(obtener_precio)-int(costoxun[0])*int(obtener_cantidad)
+                        cursor.execute("SELECT cantidad,tipo,producto FROM stock WHERE id = ?", (obtener_producto0+1,))
+                        data0=cursor.fetchone()
+                        cursor.execute("insert into ventas (producto,cantidad,precio,fecha,ncliente,dcliente,parallevar,mes,año,tipo,liquidacion) values (?, ?, ?, ?, ?, ?,?,?,?,?,?)",(data0[2], obtener_cantidad, obtener_precio,fecha, obtener_nombreyapellidocliente, obtener_direccioncliente,parallevar,obmes,obaño,data0[1],liquidacion))
+                        cantidad_a_restar = data0[0]-int(obtener_cantidad)
+                        cursor.execute("UPDATE stock SET cantidad=? where producto=?", (cantidad_a_restar,data0[2]))
+                        cursor.execute("SELECT veces,vxunidad FROM stock WHERE producto = ?", (data0[2],))
+                        veces=cursor.fetchone()
+                        vxunidad = veces[1]+int(obtener_cantidad)
+                        cursor.execute("UPDATE stock SET veces=?, vxunidad=? where producto=?", (veces[0]+1,vxunidad, data0[2]))
+                        conn.commit()
+                        pdf(data0[2],obtener_cantidad,obtener_precio,fecha,obmes,obaño)
                 cursor.close()    
                 return cantidad.delete(0,END),nombreyapellidocliente.delete(0,END),direccioncliente.delete(0,END),ventana_cventas.checkbox_value.set(0),producto.selection_clear(0, tk.END)
 
