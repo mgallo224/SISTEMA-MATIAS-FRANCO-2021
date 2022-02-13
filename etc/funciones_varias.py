@@ -39,9 +39,11 @@ def crear_db():
         conn = conectar_con_la_db(db)
         cursor = conn.cursor()
         cursor.execute("CREATE TABLE IF NOT EXISTS stock(id INTEGER PRIMARY KEY NOT NULL UNIQUE, producto TEXT, tipo TEXT, cantidad	INTEGER, fecha	TEXT, veces	INTEGER, vxunidad	INTEGER, costoxunidad INTEGER, costoxcantidad INTEGER,precioventa INTEGER)")
+        cursor.execute("CREATE TABLE IF NOT EXISTS carrito( id INTEGER PRIMARY KEY NOT NULL UNIQUE, producto TEXT, cantidad INTEGER, precio NUMERIC, fecha TEXT,ncliente	TEXT,parallevar	INTEGER,dcliente	TEXT, mes NUMERIC, año NUMERIC,tipo TEXT,liquidacion NUMERIC)")
         cursor.execute("CREATE TABLE IF NOT EXISTS ventas( id INTEGER PRIMARY KEY NOT NULL UNIQUE, producto TEXT, cantidad INTEGER, precio NUMERIC, fecha TEXT,ncliente	TEXT,parallevar	INTEGER,dcliente	TEXT, mes NUMERIC, año NUMERIC,tipo TEXT,liquidacion NUMERIC)")
         cursor.execute("CREATE TABLE IF NOT EXISTS empleados( DNI INTEGER PRIMARY KEY NOT NULL UNIQUE, nombre TEXT, apellido TEXT,jerarquia	TEXT,legajo	INTEGER,fecha TEXT,sueldo NUMERIC)")
         cursor.execute("CREATE TABLE IF NOT EXISTS servicios(id INTEGER PRIMARY KEY NOT NULL UNIQUE, nombre TEXT, tipo TEXT, gxmes	INTEGER, fecha	TEXT)")
+        cursor.execute("DELETE FROM carrito")
         conn.commit()
         cursor.close()
         return False
