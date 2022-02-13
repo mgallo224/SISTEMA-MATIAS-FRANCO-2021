@@ -1,11 +1,10 @@
+import random
 from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 import tkinter as tk
-import random
-
 from sqlalchemy import false
 from etc.funciones_varias import conectar_con_la_db,fechayhora,mes,año
 print("MODULO ACTIVO: {}" .format(__name__))
@@ -24,25 +23,6 @@ def cventas():
             precio2_label.after(2000, auto)  
 
 
-
-    def pdf(obtener_producto,obtener_cantidad,obtener_precio,fecha,obmes,obaño):
-        rand = random.randint(1,999)
-        cvas = canvas.Canvas("facturas/"+str(obtener_producto)+"_"+str(obmes)+"-"+str(obaño)+"___"+str(rand)+".pdf", pagesize=letter)
-        cvas.setLineWidth(.3)
-        cvas.setFont('Helvetica', 11)
-        cvas.drawString(30,750,'Casa de comidas "Delivery"')
-        cvas.drawString(30,735,fecha)
-        cvas.drawString(500,750,"Cantidad:"+obtener_cantidad)
-        cvas.line(480,747,580,747)
-        cvas.drawString(275,725,"Pedido:")
-        cvas.drawString(500,725,obtener_producto)
-        cvas.line(378,723,580,723)
-        cvas.drawString(30,703,'Precio:')
-        cvas.line(120,700,580,700)
-        cvas.drawString(120,703,"$"+str(obtener_precio))
-        cvas.save() 
-        return messagebox.showinfo("Carga exitosa", "El pedido fue cargado exitosamente, se genero en la carpeta del programa la factura de nombre: "+str(obtener_producto)+"_"+str(obmes)+"-"+str(obaño)+"___"+str(rand)+".pdf")
-        
     def añadir_a_la_base():
         db = "root.db"
         conn = conectar_con_la_db(db)
@@ -94,11 +74,10 @@ def cventas():
                 cursor.execute("UPDATE stock SET veces=?, vxunidad=? where producto=?", (veces[0]+1,vxunidad, data0[2]))
                 conn.commit()
                 cursor.close()
-                pdf(data0[2],obtener_cantidad,obtener_precio,fecha,obmes,obaño)
                 if checkmulti == 0:
-                    return cantidad.delete(0,END),nombreyapellidocliente.delete(0,END),direccioncliente.delete(0,END),ventana_cventas.checkbox_value.set(0),producto.selection_clear(0, tk.END)
+                    return messagebox.showinfo("Añadido al carrito", "El pedido fue cargado al carrito de compra"), cantidad.delete(0,END),nombreyapellidocliente.delete(0,END),direccioncliente.delete(0,END),ventana_cventas.checkbox_value.set(0),producto.selection_clear(0, tk.END)
                 else:
-                    return cantidad.delete(0,END),producto.selection_clear(0, tk.END)
+                    return messagebox.showinfo("Añadido al carrito", "El pedido fue cargado al carrito de compra"), cantidad.delete(0,END),producto.selection_clear(0, tk.END)
 
 
     if __name__ == "modulos.cventas":
@@ -180,6 +159,38 @@ def cventas():
 
 
 def vercarrito():
+        def pdf(obtener_producto,obtener_cantidad,obtener_precio,fecha,obmes,obaño):
+            rand = random.randint(1,999)
+            cvas = canvas.Canvas("facturas/"+str(obtener_producto)+"_"+str(obmes)+"-"+str(obaño)+"___"+str(rand)+".pdf", pagesize=letter)
+            cvas.setLineWidth(.3)
+            cvas.setFont('Helvetica', 11)
+            cvas.drawString(30,750,'Casa de comidas "Delivery"')
+            cvas.drawString(30,735,fecha)
+            cvas.drawString(500,750,"Cantidad:"+str(obtener_cantidad))
+            cvas.line(480,747,580,747)
+            cvas.drawString(275,725,"Pedido:")
+            cvas.drawString(500,725,obtener_producto)
+            cvas.line(378,723,580,723)
+            cvas.drawString(30,703,'Precio:')
+            cvas.line(120,700,580,700)
+            cvas.drawString(120,703,"$"+str(obtener_precio))
+            cvas.save() 
+            return messagebox.showinfo("Carga exitosa", "El pedido fue cargado exitosamente, se genero en la carpeta del programa la factura de nombre: "+str(obtener_producto)+"_"+str(obmes)+"-"+str(obaño)+"___"+str(rand)+".pdf")
+            
+        def añadir():
+            db = "root.db"
+            conn = conectar_con_la_db(db)
+            cursor = conn.cursor()
+            cursor.execute("select producto,cantidad,precio,fecha,mes,año from carrito")
+            infopdf = cursor.fetchone()
+            print(infopdf[1])
+            pdf(infopdf[0],infopdf[1],infopdf[2],infopdf[3],infopdf[4],infopdf[5])
+            cursor.execute("INSERT INTO ventas(producto,cantidad,precio,fecha,ncliente,dcliente,parallevar,mes,año,tipo,liquidacion) SELECT producto,cantidad,precio,fecha,ncliente,dcliente,parallevar,mes,año,tipo,liquidacion FROM carrito;")
+            cursor.execute("DELETE FROM carrito")
+            conn.commit()
+            cursor.close()
+            return ventana_cventas2.destroy()
+
         def eraseall():
             db = "root.db"
             conn = conectar_con_la_db(db)
@@ -217,9 +228,9 @@ def vercarrito():
         tree.heading("#5", text="Dirección")
         tree.pack()
         view()
-        button1 = tk.Button(ventana_cventas2,text="Cargar venta")
+        button1 = tk.Button(ventana_cventas2,text="Cargar venta", command=añadir)
         button1.pack(pady=10)
-        button2 = tk.Button(ventana_cventas2,text="Eliminar todo",command=eraseall)
+        button2 = tk.Button(ventana_cventas2,text="Eliminar carrito",command=eraseall)
         button2.pack(pady=11)
         button3 = tk.Button(ventana_cventas2,text="Salir", command=ventana_cventas2.destroy)
         button3.pack(pady=12)
