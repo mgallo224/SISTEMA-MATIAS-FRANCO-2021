@@ -5,7 +5,6 @@ from tkinter import messagebox
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 import tkinter as tk
-from sqlalchemy import false
 from etc.funciones_varias import conectar_con_la_db,fechayhora,mes,año
 print("MODULO ACTIVO: {}" .format(__name__))
 def cventas():
@@ -66,12 +65,6 @@ def cventas():
                 costoxun = cursor.fetchone()
                 liquidacion = int(obtener_precio)-int(costoxun[0])*int(obtener_cantidad)
                 cursor.execute("insert into carrito (producto,cantidad,precio,fecha,ncliente,dcliente,parallevar,mes,año,tipo,liquidacion) values (?, ?, ?, ?, ?, ?,?,?,?,?,?)",(data0[2], obtener_cantidad, obtener_precio,fecha, obtener_nombreyapellidocliente, obtener_direccioncliente,parallevar,obmes,obaño,data0[1],liquidacion))
-                cantidad_a_restar = data0[0]-int(obtener_cantidad)
-                cursor.execute("UPDATE stock SET cantidad=? where producto=?", (cantidad_a_restar,data0[2]))
-                cursor.execute("SELECT veces,vxunidad FROM stock WHERE producto = ?", (data0[2],))
-                veces=cursor.fetchone()
-                vxunidad = veces[1]+int(obtener_cantidad)
-                cursor.execute("UPDATE stock SET veces=?, vxunidad=? where producto=?", (veces[0]+1,vxunidad, data0[2]))
                 conn.commit()
                 cursor.close()
                 if checkmulti == 0:
@@ -181,25 +174,46 @@ def vercarrito():
             db = "root.db"
             conn = conectar_con_la_db(db)
             cursor = conn.cursor()
-            cursor.execute("select producto,cantidad,precio,fecha,mes,año from carrito")
-            infopdf = cursor.fetchone()
-            print(infopdf[1])
-            pdf(infopdf[0],infopdf[1],infopdf[2],infopdf[3],infopdf[4],infopdf[5])
-            cursor.execute("INSERT INTO ventas(producto,cantidad,precio,fecha,ncliente,dcliente,parallevar,mes,año,tipo,liquidacion) SELECT producto,cantidad,precio,fecha,ncliente,dcliente,parallevar,mes,año,tipo,liquidacion FROM carrito;")
-            cursor.execute("DELETE FROM carrito")
-            conn.commit()
-            cursor.close()
-            return ventana_cventas2.destroy()
+            cursor.execute("select producto,cantidad,precio,fecha,mes,año,id from carrito")
+            infopdf = cursor.fetchall()
+            cursor.execute("select MAX(id) from carrito")
+            rango = cursor.fetchone()
+            if all(elem is None for elem in infopdf) == True:
+                conn.commit()
+                cursor.close()
+                return messagebox.showerror('Oops!', 'El carrito esta vacio')
+            else:
+                for i in range(rango[0]):
+                    pdf(infopdf[i][0],infopdf[i][1],infopdf[i][2],infopdf[i][3],infopdf[i][4],infopdf[i][5])
+                    cursor.execute("SELECT cantidad,tipo,producto FROM stock WHERE producto = ?", (infopdf[i][0],))
+                    data0=cursor.fetchone()
+                    cantidad_a_restar = data0[0]-int(infopdf[i][1])
+                    cursor.execute("UPDATE stock SET cantidad=? where producto=?", (cantidad_a_restar,data0[2]))
+                    cursor.execute("SELECT veces,vxunidad FROM stock WHERE producto = ?", (data0[2],))
+                    veces=cursor.fetchone()
+                    vxunidad = veces[1]+int(infopdf[i][1])
+                    cursor.execute("UPDATE stock SET veces=?, vxunidad=? where producto=?", (veces[0]+1,vxunidad, data0[2]))
+                cursor.execute("INSERT INTO ventas(producto,cantidad,precio,fecha,ncliente,dcliente,parallevar,mes,año,tipo,liquidacion) SELECT producto,cantidad,precio,fecha,ncliente,dcliente,parallevar,mes,año,tipo,liquidacion FROM carrito;")
+                cursor.execute("DELETE FROM carrito")
+                conn.commit()
+                cursor.close()
+                return ventana_cventas2.destroy()
 
         def eraseall():
             db = "root.db"
             conn = conectar_con_la_db(db)
             cursor = conn.cursor()
-            cursor.execute("DELETE FROM carrito")
-            conn.commit()
-            cursor.close()
-            messagebox.showinfo('Eliminado', 'El carrito fue eliminado correctamente')
-            return ventana_cventas2.destroy()
+            cursor.execute("SELECT * FROM carrito")
+            erase = cursor.fetchall()
+            print(erase)
+            if len(erase)==0:
+                return messagebox.showerror("Error", "El carrito ya esta vacio")
+            else:
+                cursor.execute("DELETE FROM carrito")
+                conn.commit()
+                cursor.close()
+                messagebox.showinfo('Eliminado', 'El carrito fue eliminado correctamente')
+                return ventana_cventas2.destroy()
 
         def view():
                 db = "root.db"
@@ -237,4 +251,4 @@ def vercarrito():
         ventana_cventas2.title("Ver carrito")
         ventana_cventas2['bg'] = '#3cba54'
         ventana_cventas2.mainloop()
-        return false
+        return False
