@@ -153,22 +153,21 @@ def cventas():
 
 def vercarrito():
         def pdf(obtener_producto,obtener_cantidad,obtener_precio,fecha,obmes,obaño):
-            rand = random.randint(1,999)
-            cvas = canvas.Canvas("facturas/"+str(obtener_producto)+"_"+str(obmes)+"-"+str(obaño)+"___"+str(rand)+".pdf", pagesize=letter)
+            rand = random.randint(1,9999)
+            cvas = canvas.Canvas("facturas/"+str(rand)+"_"+str(obmes)+"-"+str(obaño)+".pdf", pagesize=letter)
             cvas.setLineWidth(.3)
             cvas.setFont('Helvetica', 11)
             cvas.drawString(30,750,'Casa de comidas "Delivery"')
             cvas.drawString(30,735,fecha)
             cvas.drawString(500,750,"Cantidad:"+str(obtener_cantidad))
             cvas.line(480,747,580,747)
-            cvas.drawString(275,725,"Pedido:")
-            cvas.drawString(500,725,obtener_producto)
-            cvas.line(378,723,580,723)
+            cvas.drawString(205,725,"Pedido:")
+            cvas.drawString(300,725,obtener_producto)
             cvas.drawString(30,703,'Precio:')
             cvas.line(120,700,580,700)
             cvas.drawString(120,703,"$"+str(obtener_precio))
             cvas.save() 
-            return messagebox.showinfo("Carga exitosa", "El pedido fue cargado exitosamente, se genero en la carpeta del programa la factura de nombre: "+str(obtener_producto)+"_"+str(obmes)+"-"+str(obaño)+"___"+str(rand)+".pdf")
+            return messagebox.showinfo("Carga exitosa", "El pedido fue cargado exitosamente, se genero en la carpeta del programa la factura de nombre: "+str(rand)+"_"+str(obmes)+"-"+str(obaño)+".pdf")
             
         def añadir():
             db = "root.db"
@@ -178,21 +177,33 @@ def vercarrito():
             infopdf = cursor.fetchall()
             cursor.execute("select MAX(id) from carrito")
             rango = cursor.fetchone()
+            lista_productos = []
             if all(elem is None for elem in infopdf) == True:
                 conn.commit()
                 cursor.close()
                 return messagebox.showerror('Oops!', 'El carrito esta vacio')
             else:
                 for i in range(rango[0]):
-                    pdf(infopdf[i][0],infopdf[i][1],infopdf[i][2],infopdf[i][3],infopdf[i][4],infopdf[i][5])
+                    lista_productos.append(infopdf[i][0])
+                    print(lista_productos)
+                    pdfproducto = "/".join(lista_productos)
                     cursor.execute("SELECT cantidad,tipo,producto FROM stock WHERE producto = ?", (infopdf[i][0],))
                     data0=cursor.fetchone()
                     cantidad_a_restar = data0[0]-int(infopdf[i][1])
                     cursor.execute("UPDATE stock SET cantidad=? where producto=?", (cantidad_a_restar,data0[2]))
-                    cursor.execute("SELECT veces,vxunidad FROM stock WHERE producto = ?", (data0[2],))
+                    cursor.execute("SELECT veces,vxunidad,cantidad FROM stock WHERE producto = ?", (data0[2],))
                     veces=cursor.fetchone()
+                    cursor.execute("SELECT SUM(cantidad) from carrito where producto = ?", (infopdf[i][0],))
+                    correccion = cursor.fetchone()
+                    if veces[2]+1<int(correccion[0]):
+                        conn.commit
+                        cursor.close()
+                        return messagebox.showerror("Oops", "Parece que la suma de la cantidad de un producto en la lista excede el stock del mismo, no se puede continuar con la compra")
                     vxunidad = veces[1]+int(infopdf[i][1])
                     cursor.execute("UPDATE stock SET veces=?, vxunidad=? where producto=?", (veces[0]+1,vxunidad, data0[2]))
+                cursor.execute("SELECT SUM(cantidad),SUM(precio) from carrito") 
+                suma = cursor.fetchone() 
+                pdf(pdfproducto,suma[0],suma[1],infopdf[i][3],infopdf[i][4],infopdf[i][5])
                 cursor.execute("INSERT INTO ventas(producto,cantidad,precio,fecha,ncliente,dcliente,parallevar,mes,año,tipo,liquidacion) SELECT producto,cantidad,precio,fecha,ncliente,dcliente,parallevar,mes,año,tipo,liquidacion FROM carrito;")
                 cursor.execute("DELETE FROM carrito")
                 conn.commit()
@@ -242,12 +253,24 @@ def vercarrito():
         tree.heading("#5", text="Dirección")
         tree.pack()
         view()
+        db = "root.db"
+        conn = conectar_con_la_db(db)
+        cursor = conn.cursor()
+        cursor.execute("select SUM(precio), SUM(cantidad) from carrito")
+        i = cursor.fetchone()
+        if all(elem is None for elem in i) ==  False:
+            info1 = "Precio total del carrito: $"+str(i[0])
+            p_label = Label(ventana_cventas2, text=info1)
+            p_label.pack(pady=10)
+            info2 = "Cantidad total del carrito: "+str(i[1])
+            p_label = Label(ventana_cventas2, text=info2)
+            p_label.pack(pady=10)
         button1 = tk.Button(ventana_cventas2,text="Cargar venta", command=añadir)
         button1.pack(pady=10)
         button2 = tk.Button(ventana_cventas2,text="Eliminar carrito",command=eraseall)
-        button2.pack(pady=11)
+        button2.pack(pady=10)
         button3 = tk.Button(ventana_cventas2,text="Salir", command=ventana_cventas2.destroy)
-        button3.pack(pady=12)
+        button3.pack(pady=10)
         ventana_cventas2.title("Ver carrito")
         ventana_cventas2['bg'] = '#3cba54'
         ventana_cventas2.mainloop()
