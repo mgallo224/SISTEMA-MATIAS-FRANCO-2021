@@ -89,7 +89,7 @@ def cventas():
         cursor.execute("SELECT producto,tipo FROM stock order by id")
         data=cursor.fetchall()
         producto_label = Label(ventana_cventas, text="Pedido:")
-        producto_label.place(x=20, y=300)
+        producto_label.place(x=20, y=100)
         scrollbar = Scrollbar(ventana_cventas)
         scrollbar.pack(side=RIGHT, fill=Y)
         producto = Listbox(ventana_cventas)
@@ -99,35 +99,35 @@ def cventas():
             producto.insert(END, lista[0]+"-"+lista[1])
         producto.config(yscrollcommand=scrollbar.set, height=5, selectmode=SINGLE, width=50)
         scrollbar.config(command=producto.yview)
-        producto.place(x=150, y=300)
+        producto.place(x=150, y=100)
         #ingresar otro pedido para el cliente
         multi_value = tk.BooleanVar(ventana_cventas)
         multi = ttk.Checkbutton(ventana_cventas, text="Agregar otro pedido al mismo cliente", variable=multi_value)
         multi.place(x=200, y=400)
         # Crear caja de texto cantidad
         cantidad_label = Label(ventana_cventas, text="Ingrese la cantidad:")
-        cantidad_label.place(x=20, y=100)
+        cantidad_label.place(x=20, y=200)
         cantidad = tk.Entry(ventana_cventas)
         # Posicionarla en la ventana.
-        cantidad.place(x=150, y=100)
+        cantidad.place(x=150, y=200)
         # Crear caja de texto precio
         precio_label = Label(ventana_cventas, text="Precio:")
-        precio_label.place(x=20, y=150)
+        precio_label.place(x=20, y=250)
         precio2_label = Label(ventana_cventas, text="0")
-        precio2_label.place(x=200, y=150)
+        precio2_label.place(x=200, y=250)
         auto()
         # Crear caja de texto nombre cliente
         nombreyapellidocliente_label = Label(ventana_cventas, text="Nombre y apellido del cliente (Opcional):")
-        nombreyapellidocliente_label.place(x=20, y=200)
+        nombreyapellidocliente_label.place(x=20, y=300)
         nombreyapellidocliente = tk.Entry(ventana_cventas)
         # Posicionarla en la ventana.
-        nombreyapellidocliente.place(x=250, y=200)
+        nombreyapellidocliente.place(x=250, y=300)
         # Crear caja de texto direccion cliente
         direccioncliente_label = Label(ventana_cventas, text="Dirección del cliente (Opcional):")
-        direccioncliente_label.place(x=20, y=250)
+        direccioncliente_label.place(x=20, y=350)
         direccioncliente = tk.Entry(ventana_cventas)
         # Posicionarla en la ventana.
-        direccioncliente.place(x=200, y=250)
+        direccioncliente.place(x=200, y=350)
         #checkbox delivery
         ventana_cventas.checkbox_value = tk.BooleanVar(ventana_cventas)
         ventana_cventas.checkbox = ttk.Checkbutton(ventana_cventas, text="Para llevar", variable=ventana_cventas.checkbox_value)
